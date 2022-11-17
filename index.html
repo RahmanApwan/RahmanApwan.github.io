@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        * {
+            text-align: center;
+            color: aqua;
+        }
+
+        .border {
+            border: solid #032361;
+            width: 1440px;
+            height: 1024px;
+            margin-top: 8px;
+            background: url("ui.jpg");
+            background-size: contain;
+        }
+
+        div {
+            text-align: center;
+            
+        }
+        #tugas {
+            position: absolute;
+            top: 15%;
+            left: 43%;
+        }
+        button {
+            
+            width: 282px;
+            height: 45.63px;
+            background:burlywood;
+            border-radius: 59px;
+
+            top: 500px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-style: normal;
+            font-weight: 600;   
+            font-size: 20px;
+            line-height: 24px;
+        }
+
+        button:active {
+            background: #ff3700;
+            color: rgba(255, 0, 238, 0.78);
+        }
+        #select{
+            position: absolute  ;
+            top: 65%;
+            left: 30%;
+            transform: translate(10%,0%);
+        }
+        #level{
+            position: absolute;
+            top: 70%;
+            left: 22%;
+        }
+        img{
+            height: 250px;
+            width: 250px
+        }
+        #restart{
+            position: absolute;
+            border-radius: 119px;
+            width: 400px;
+            height: 250px;
+            top: 50%;
+            left: 51%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(301.36deg, rgba(0, 0, 0, 0.78) 62.15%, #000000 101.57%);
+        }
+        #menu{
+            position: absolute;
+            border-radius: 119px;
+            width: 400px;
+            height: 250px;
+            top: 90%;
+            left: 52%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(301.36deg, rgba(119, 0, 255, 0.78) 62.15%, #da0091 101.57%);
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="border">
+        <div id="tugas">
+            <button onclick="milih()" style="margin: 400px 1px 25px 1px;">START</button> <br>
+            <button id="setting" onclick="menu()">Setting</button>
+        </div>
+        <div id="level" style="display: none;">
+            <button onclick="level(1)">LEVEL 1</button>
+            <button onclick="level(2)">LEVEL 2</button>
+            <button onclick="level(3)">LEVEL 3</button>
+        </div>
+        <div id="select" style="display: none;">
+            <h1 style="font-size: 50px; color: rgb(255, 255, 255); font-style: italic;"><b>PILIH KARAKTER</b></h1>
+            <img src="player0.png">
+            <img src="player1.png">
+        </div>
+        <div id="menu" style="display: none;">
+            <h1>PENGATURAN</h1>
+            <h2>SUARA</h2>
+            <input type="range" min="0" max="100" step="1">
+        </div>
+    </div>
+    <div id="restart" style="display:none;">
+        <h1>KAMU KALAH</h1>
+        <h2>SCORE:<span id="skor">0</span></h2>
+        <button onclick="startGame()">RESTART</button>
+    </div>
+    <script>
+        //variable
+        var myGamePiece;
+        var myBackground;
+        var myObstacles = [];
+        var myScore;
+        var mySound;
+        var myMusic;
+        var select = document.getElementById("select");
+        var player = document.querySelectorAll("#select img");
+        var setting = document.getElementById('setting');
+        var border = document.getElementsByClassName('border');
+        var LEVEL = document.getElementById('level');
+        var sulit;
+
+        function milih(){
+            select.style.display = "";
+            document.querySelector('.border div button').style.display = 'none';
+            setting.style.display = 'none';
+            
+        }
+        for (let i = 0; i < player.length; i++) {
+            player[i].addEventListener('click', function(){
+                Iplayer = i;
+                milihlevel();
+            })
+        }
+        function milihlevel(){
+            select.style.display = 'none';
+            LEVEL.style.display = '';
+        }
+        function level(stage){
+            LEVEL.style.display = 'none';
+            sulit = stage;
+            startGame();
+        }
+        function menu(){
+            document.getElementById('tugas').style.display = 'none';
+            document.getElementById('menu').style.display = '';
+        }
+        function startGame() {
+            myGamePiece = new component(80, 80, "player"+Iplayer+".png", 10, 120, "image");
+            myBackground = new component(1360, 600, "bg"+sulit+".jpg", 0, 0, "image");
+            myGamePiece.gravity = 0.05;
+            myScore = new component("35px", "Inter", "red", 280, 40, "text");
+            myGameArea.start();
+            mySound = new sound('sound.mp3');
+            myMusic = new sound("lagu.mp3");
+
+            document.querySelector('#select').style.display = 'none';
+            document.querySelector(".border").style.display = "none";
+            document.querySelector('#restart').style.display = "none";
+            myObstacles.splice(0, myObstacles.length);
+        }
+
+        var myGameArea = {
+            canvas: document.createElement("canvas"),
+            start: function () {
+                this.canvas.width = 1360;
+                this.canvas.height = 600;
+                this.context = this.canvas.getContext("2d");
+                document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+                this.frameNo = 0;
+                this.interval = setInterval(updateGameArea, 20);
+            },
+            clear: function () {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            },
+            stop: function () {
+                clearInterval(this.interval);
+                document.getElementById('restart').style.display = '';
+                document.getElementById('skor').innerHTML = this.frameNo;
+            }
+        }
+
+        function component(width, height, color, x, y, type) {
+            this.type = type;
+            if (type == "image") {
+                this.image = new Image();
+                this.image.src = color;
+            }
+            this.type = type;
+            this.width = width;
+            this.height = height;
+            this.speedX = 0;
+            this.speedY = 0;
+            this.x = x;
+            this.y = y;
+            this.gravity = 0.1;//gravitasinya
+            this.gravitySpeed = 0;//kecepatan turunnya
+            this.bounce = 0.2;
+
+            this.update = function () {
+                ctx = myGameArea.context;
+                if (this.type == "text") {
+                    ctx.font = this.width + " " + this.height;
+                    ctx.fillStyle = color;
+                    ctx.fillText(this.text, this.x, this.y);
+                }
+                if (type == "image") {
+                    ctx.drawImage(this.image,
+                        this.x,
+                        this.y,
+                        this.width, this.height);
+                } else {
+                    ctx.fillStyle = color;
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                }
+            }
+            this.newPos = function () {
+                this.gravitySpeed += this.gravity;
+                this.x += this.speedX;
+                this.y += this.speedY + this.gravitySpeed;
+                this.hitBottom();
+                this.hitTop();
+            }
+            this.hitBottom = function () {
+                var rockbottom = myGameArea.canvas.height - this.height - 70;
+                if (this.y > rockbottom) {
+                    this.y = rockbottom;
+                    this.gravitySpeed = -(this.gravitySpeed * this.bounce);
+                }
+            }
+            this.hitTop = function () {
+                var rocktop = 0;
+                if (this.y < rocktop) {
+                    this.y = rocktop;
+                    this.gravitySpeed = this.bounce;
+                }
+            }
+
+            this.crashWith = function (otherobj) {
+                var myleft = this.x;
+                var myright = this.x + (this.width);
+                var mytop = this.y;
+                var mybottom = this.y + (this.height);
+                var otherleft = otherobj.x;
+                var otherright = otherobj.x + (otherobj.width);
+                var othertop = otherobj.y;
+                var otherbottom = otherobj.y + (otherobj.height);
+                var crash = true;
+                if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+                    crash = false;
+                }
+                return crash;
+            }
+        }
+
+        function updateGameArea() {
+            var x, size, i, random, random1;
+            for (i = 0; i < myObstacles.length; i += 1) {
+                if (myGamePiece.crashWith(myObstacles[i])) {
+                    mySound.play();
+                    myMusic.stop();
+                    myGameArea.stop();
+                    return;
+                }
+            }
+
+            if (myGameArea.frameNo==2000){
+                myMusic.stop();
+                myGameArea.stop();
+                document.querySelector(`#restart h1`).innerHTML = "SELAMAT";
+            }
+            myGameArea.clear();
+            myBackground.newPos();
+            myBackground.update();
+            myGameArea.frameNo += 1;
+            if(sulit==3){
+                if (myGameArea.frameNo == 1 || everyinterval(30)) {
+                    x = myGameArea.canvas.width;
+                    size = Math.random() * (100 - 30) + 30;
+                    i = Math.round(Math.random() * 2 + 1); //index obs
+                    random = Math.floor(Math.random() * 300);
+                    random1 = Math.floor(Math.random() * 300 + 300);
+                    myObstacles.push(new component(55, 55, "sayap.png", x, random, "image"));//Posisi tertinggi 0
+                    myObstacles.push(new component(60, 60, "monster1.png", x + 50, 395, "image"));//Posisi terendah
+                }
+                for (i = 0; i < myObstacles.length; i += 1) {
+                    myObstacles[i].x += -12; //KECEPATAN OBSTACLE
+                    myObstacles[i].update();
+                }
+            }else if(sulit==2){
+                if (myGameArea.frameNo == 1 || everyinterval(50)) {
+                    x = myGameArea.canvas.width;
+                    size = Math.random() * (100 - 30) + 30;
+                    i = Math.round(Math.random() * 2 + 1); //index obs
+                    random = Math.floor(Math.random() * 300);
+                    random1 = Math.floor(Math.random() * 300 + 300);
+                    myObstacles.push(new component(55, 55, "sayap.png", x, random, "image"));//Posisi tertinggi 0
+                    myObstacles.push(new component(60, 60, "monster1.png", x + 50, 395, "image"));//Posisi terendah
+                }
+                for (i = 0; i < myObstacles.length; i += 1) {
+                    myObstacles[i].x += -8; //KECEPATAN OBSTACLE
+                    myObstacles[i].update();
+                }
+            }else{
+                if (myGameArea.frameNo == 1 || everyinterval(110)) {
+                    x = myGameArea.canvas.width;
+                    size = Math.random() * (100 - 30) + 30;
+                    i = Math.round(Math.random() * 2 + 1); //index obs
+                    random = Math.floor(Math.random() * 300);
+                    random1 = Math.floor(Math.random() * 300 + 300);
+                    myObstacles.push(new component(55, 55, "sayap.png", x, random, "image"));//Posisi tertinggi 0
+                    myObstacles.push(new component(60, 60, "monster1.png", x + 50, 465, "image"));//Posisi terendah
+                }
+                for (i = 0; i < myObstacles.length; i += 1) {
+                    myObstacles[i].x += -4; //KECEPATAN OBSTACLE
+                    myObstacles[i].update();
+                }
+            }
+            myScore.text = "SCORE: " + myGameArea.frameNo;
+            myScore.update();
+            myGamePiece.newPos();
+            myGamePiece.update();
+            myMusic.play();
+        }
+        function sound(src) {
+            this.sound = document.createElement("audio");
+            this.sound.src = src;
+            this.sound.setAttribute("preload", "auto");
+            this.sound.setAttribute("controls", "none");
+            this.sound.style.display = "none";
+            document.body.appendChild(this.sound);
+
+            this.play = function () {
+                this.sound.play();
+            }
+            this.stop = function () {
+                this.sound.pause();
+            }
+        }
+        function everyinterval(n) {//untuk naik turun karakter 
+            if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
+            return false;
+        }
+
+        function accelerate(n) {//unutk naik turun tetapi makin lama ditekan tombolnya makin cepat
+            if (!myGameArea.interval) { myGameArea.interval = setInterval(updateGameArea, 20); }
+
+            myGamePiece.gravity = n;
+        }
+        // CONTROLLER
+        document.addEventListener('keydown', function (e) {
+            if (e.which === 32) {
+                accelerate(-0.4);
+            }
+        });
+        document.addEventListener('keyup', function (e) {
+            if (e.which === 32) {
+                accelerate(0.3);
+            }
+        });
+    </script>
+</body>
+
+</html>   
